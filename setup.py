@@ -2,18 +2,6 @@ from setuptools import find_packages
 from setuptools import setup
 
 
-def load_requirements() -> list[str]:
-    """Load project dependencies."""
-    requirements = []
-    with open('requirements.txt', 'r') as f:
-        for line in f.readlines():
-            # Skip comments and empty lines.
-            if line.startswith('#') or line.isspace():
-                continue
-            requirements.append(line)
-    return requirements
-
-
 setup(
     name="wemux",
     version="0.0.1",
@@ -23,5 +11,15 @@ setup(
     packages=find_packages(include=[
         "wemux"
     ]),
-    install_requires=load_requirements()
+    install_requires=[
+        "pytest~=8.3",
+        "pydantic~=2.9"
+    ],
+    classifiers=[
+        "Development Status :: 3 - Alpha",
+        "Programming Language :: Python :: 3",
+        "Programming Language :: Python :: 3.12",
+        "License :: OSI Approved :: MIT License",
+        "Operating System :: OS Independent",
+    ]
 )
