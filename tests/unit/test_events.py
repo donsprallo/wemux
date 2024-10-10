@@ -12,7 +12,7 @@ def mbus():
     return messagebus.MessageBus(
         dispatcher.LocalCommandDispatcher(),
         dispatcher.LocalEventDispatcher(),
-        dispatcher.LocalEventCollector()
+        dispatcher.LocalEventStreamReader()
     )
 
 

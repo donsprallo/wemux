@@ -26,17 +26,17 @@ type EventDispatcherFunc = t.Callable[[
 listeners and an event. The callable returns nothing."""
 
 
-class EventCollector(abc.ABC):
+class EventStreamReader(abc.ABC):
 
     @abc.abstractmethod
-    def collect(self) -> t.Sequence[message.Event]:
+    def read_events(self) -> t.Sequence[message.Event]:
         raise NotImplementedError
 
 
-class EventCollection:
+class EventStream(t.Iterator[message.Event]):
 
-    def __init__(self, collector: EventCollector) -> None:
-        self._collector = collector
+    def __init__(self, stream_reader: EventStreamReader) -> None:
+        self._stream_reader = stream_reader
         self._events: list[message.Event] = []
 
     def add(self, event: message.Event) -> None:
@@ -49,7 +49,7 @@ class EventCollection:
         if not self._events:
             raise StopIteration
         # Collect events from the collector.
-        for event in self._collector.collect():
+        for event in self._stream_reader.read_events():
             self._events.append(event)
         # return the first event.
         return self._events.pop(0)
@@ -91,9 +91,9 @@ class EventDispatcher(abc.ABC):
         self.dispatch(event_listeners, event)
 
 
-class LocalEventCollector(EventCollector):
+class LocalEventStreamReader(EventStreamReader):
 
-    def collect(self) -> t.Sequence[message.Event]:
+    def read_events(self) -> t.Sequence[message.Event]:
         return []
 
 
