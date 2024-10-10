@@ -3,6 +3,6 @@ class MessageBusError(Exception):
     pass
 
 
-class CommandHandlerNotFoundError(MessageBusError):
-    """Raised when no command handler is found for a command."""
+class HandlerNotFoundError(MessageBusError):
+    """Raised when no handler is found for a command or a message."""
     pass

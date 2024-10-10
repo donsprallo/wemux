@@ -49,7 +49,7 @@ class CommandHandler:
     returns a result."""
 
     @abc.abstractmethod
-    def handle(self, bus: 'MessageBus', command: Command) -> t.Any:
+    def handle(self, command: Command) -> t.Any:
         """Call the command handler."""
         raise NotImplementedError
 
@@ -59,7 +59,7 @@ class EventListener:
     nothing."""
 
     @abc.abstractmethod
-    def handle(self, bus: 'MessageBus', event: Event) -> None:
+    def handle(self, event: Event) -> None:
         """Call the event listener."""
         raise NotImplementedError
 
@@ -70,15 +70,15 @@ class Middleware:
     before, after and error are called at different points in the message
     handling process."""
 
-    def before(self, bus: 'MessageBus', message: Message) -> None:
+    def before(self, message: Message) -> None:
         """Call the middleware before the message is handled."""
         pass
 
-    def after(self, bus: 'MessageBus', message: Message) -> None:
+    def after(self, message: Message) -> None:
         """Call the middleware after the message is handled."""
         pass
 
-    def error(self, bus: 'MessageBus', message: Message, ex: Exception) -> None:
+    def error(self, message: Message, ex: Exception) -> None:
         """Call the middleware when an exception is raised."""
         pass
 
@@ -87,16 +87,107 @@ class LoggerMiddleware(Middleware):
     """A simple middleware that logs messages."""
 
     @t.override
-    def before(self, bus: 'MessageBus', message: Message) -> None:
+    def before(self, message: Message) -> None:
         logger.info(f"handle {message}")
 
     @t.override
-    def after(self, bus: 'MessageBus', message: Message) -> None:
+    def after(self, message: Message) -> None:
         logger.info(f"{message} handled successfully.")
 
     @t.override
-    def error(self, bus: 'MessageBus', message: Message, ex: Exception) -> None:
+    def error(self, message: Message, ex: Exception) -> None:
         logger.error(ex)
+
+
+type CommandHandlerMap = t.Dict[t.Type[Command], CommandHandler]
+"""A command handler map is a dictionary that maps a command to a command
+handler."""
+
+type CommandHandlerStrategyFunc = t.Callable[[
+    CommandHandlerMap,
+    Command
+], t.Any]
+"""The command handler strategy is a callable that takes a dictionary of
+command handlers and a command. The callable returns the result of the
+command handler."""
+
+type EventHandlerStrategyFunc = t.Callable[[
+    t.List[EventListener],
+    Event
+], None]
+"""The event handler strategy is a callable that takes a list of event
+listeners and an event. The callable returns nothing."""
+
+
+class CommandHandlerStrategy(abc.ABC):
+
+    @abc.abstractmethod
+    def __call__(
+        self,
+        command_handlers: CommandHandlerMap,
+        command: Command
+    ) -> t.Any:
+        raise NotImplementedError
+
+
+class EventHandlerStrategy(abc.ABC):
+
+    @abc.abstractmethod
+    def __call__(
+        self,
+        event_listeners: list[EventListener],
+        event: Event
+    ) -> None:
+        raise NotImplementedError
+
+
+class LocalCommandHandlerStrategy(CommandHandlerStrategy):
+
+    def __init__(self, middleware: list[Middleware] | None = None) -> None:
+        self._middleware: list[Middleware] = middleware or []
+
+    def __call__(
+        self,
+        command_handlers: t.Dict[t.Type[Command], CommandHandler],
+        command: Command
+    ) -> t.Any:
+        handler = command_handlers.get(type(command))
+        if handler is None:
+            raise errors.HandlerNotFoundError(
+                f"no handler for command {command}")
+        try:
+            for middleware in self._middleware:
+                middleware.before(command)
+            result = handler.handle(command)
+            for middleware in self._middleware:
+                middleware.after(command)
+            return result
+        except Exception as ex:
+            for middleware in self._middleware:
+                middleware.error(command, ex)
+            raise ex
+
+
+class LocalEventHandlerStrategy(EventHandlerStrategy):
+
+    def __init__(self, middleware: list[Middleware] | None = None) -> None:
+        self._middleware: list[Middleware] = middleware or []
+
+    def __call__(
+        self,
+        event_listeners: list[EventListener],
+        event: Event
+    ) -> None:
+        for listener in event_listeners:
+            try:
+                for middleware in self._middleware:
+                    middleware.before(event)
+                listener.handle(event)
+                for middleware in self._middleware:
+                    middleware.after(event)
+            except Exception as ex:
+                for middleware in self._middleware:
+                    middleware.error(event, ex)
 
 
 class MessageBus:
@@ -105,8 +196,13 @@ class MessageBus:
     listeners are subscribed to the bus. Each message is send to each
     listener."""
 
-    def __init__(self, middleware: list[Middleware] | None = None) -> None:
-        self._middleware: list[Middleware] = middleware or []
+    def __init__(
+        self,
+        command_strategy: CommandHandlerStrategyFunc,
+        event_strategy: EventHandlerStrategyFunc
+    ) -> None:
+        self._command_strategy = command_strategy
+        self._event_strategy = event_strategy
         self._command_handlers: t.Dict[
             t.Type[Command],
             CommandHandler
@@ -121,17 +217,17 @@ class MessageBus:
         event is send to the bus."""
 
     def add_listener(
-            self,
-            key: t.Type[Event],
-            listener: EventListener
+        self,
+        key: t.Type[Event],
+        listener: EventListener
     ) -> None:
         """Add an event listener to the bus."""
         self._event_listeners[key].append(listener)
 
     def add_handler(
-            self,
-            key: t.Type[Command],
-            handler: CommandHandler
+        self,
+        key: t.Type[Command],
+        handler: CommandHandler
     ) -> None:
         """Add a command handler to the bus."""
         self._command_handlers[key] = handler
@@ -141,7 +237,7 @@ class MessageBus:
         command as an argument to identify the command."""
 
         def decorator(
-                handler: t.Type[CommandHandler]
+            handler: t.Type[CommandHandler]
         ) -> t.Type[CommandHandler]:
             self.add_handler(command, handler())
             return handler
@@ -152,16 +248,7 @@ class MessageBus:
         """Handle an event. The event is sent to all event listeners. When an
         event listener raises an exception, the exception is caught and logged.
         The event is not send to the other listeners."""
-        for listener in self._event_listeners[type(event)]:
-            try:
-                for middleware in self._middleware:
-                    middleware.before(self, event)
-                listener.handle(self, event)
-                for middleware in self._middleware:
-                    middleware.after(self, event)
-            except Exception as ex:
-                for middleware in self._middleware:
-                    middleware.error(self, event, ex)
+        self._event_strategy(self._event_listeners[type(event)], event)
 
     def handle(self, command: Command) -> t.Any:
         """Handle a command. The command is sent to the command handler.
@@ -172,18 +259,4 @@ class MessageBus:
         Raises:
             errors.CommandHandlerNotFoundError: when no handler is found.
         """
-        handler = self._command_handlers.get(type(command))
-        if handler is None:
-            raise errors.CommandHandlerNotFoundError(
-                f"no handler for command {command}")
-        try:
-            for middleware in self._middleware:
-                middleware.before(self, command)
-            result = handler.handle(self, command)
-            for middleware in self._middleware:
-                middleware.after(self, command)
-            return result
-        except Exception as ex:
-            for middleware in self._middleware:
-                middleware.error(self, command, ex)
-            raise ex
+        return self._command_strategy(self._command_handlers, command)

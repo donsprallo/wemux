@@ -1,4 +1,15 @@
+import pytest
+
 from wemux import messagebus
+
+
+@pytest.fixture
+def mbus():
+    """A fixture that returns a message bus."""
+    return messagebus.MessageBus(
+        messagebus.LocalCommandHandlerStrategy(),
+        messagebus.LocalEventHandlerStrategy()
+    )
 
 
 class TestEvent(messagebus.Event):
@@ -16,31 +27,28 @@ class TestEventListener(messagebus.EventListener):
 
     def handle(
         self,
-        bus: messagebus.MessageBus,
         event: TestEvent
     ) -> None:
         self.is_handled = True
         event.is_handled = True
 
 
-def test_handle_event_must_call_listener():
-    bus = messagebus.MessageBus()
-
+def test_handle_event_must_call_listener(mbus):
     listener1 = TestEventListener()
     listener2 = TestEventListener()
 
-    bus.add_listener(
+    mbus.add_listener(
         TestEvent,
         listener1
     )
 
-    bus.add_listener(
+    mbus.add_listener(
         TestEvent,
         listener2
     )
 
     expected = TestEvent()
-    bus.emit(expected)
+    mbus.emit(expected)
 
     assert expected.is_handled is True
     assert listener1.is_handled is True
