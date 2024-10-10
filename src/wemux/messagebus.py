@@ -68,9 +68,7 @@ class MessageBus:
         event listener raises an exception, the exception is caught and logged.
         The event is not send to the other listeners."""
         self._event_collection.add(event)
-        for _event in self._event_collection:
-            event_listener = self._event_listeners[type(event)]
-            self._event_dispatcher(event_listener, _event)
+        self._emit_events()
 
     def handle(self, command: message.Command) -> t.Any:
         """Handle a command. The command is sent to the command handler.
@@ -82,7 +80,10 @@ class MessageBus:
             errors.CommandHandlerNotFoundError: when no handler is found.
         """
         result = self._command_dispatcher(self._command_handlers, command)
+        self._emit_events()
+        return result
+
+    def _emit_events(self) -> None:
         for _event in self._event_collection:
             event_listener = self._event_listeners[type(_event)]
             self._event_dispatcher(event_listener, _event)
-        return result
