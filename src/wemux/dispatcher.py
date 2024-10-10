@@ -26,6 +26,35 @@ type EventDispatcherFunc = t.Callable[[
 listeners and an event. The callable returns nothing."""
 
 
+class EventCollector(abc.ABC):
+
+    @abc.abstractmethod
+    def collect(self) -> t.Sequence[message.Event]:
+        raise NotImplementedError
+
+
+class EventCollection:
+
+    def __init__(self, collector: EventCollector) -> None:
+        self._collector = collector
+        self._events: list[message.Event] = []
+
+    def add(self, event: message.Event) -> None:
+        self._events.append(event)
+
+    def __iter__(self) -> t.Self:
+        return self
+
+    def __next__(self) -> message.Event:
+        if not self._events:
+            raise StopIteration
+        # Collect events from the collector.
+        for event in self._collector.collect():
+            self._events.append(event)
+        # return the first event.
+        return self._events.pop(0)
+
+
 class CommandDispatcher(abc.ABC):
 
     @abc.abstractmethod
@@ -60,6 +89,12 @@ class EventDispatcher(abc.ABC):
         event: message.Event
     ) -> None:
         self.dispatch(event_listeners, event)
+
+
+class LocalEventCollector(EventCollector):
+
+    def collect(self) -> t.Sequence[message.Event]:
+        return []
 
 
 class LocalCommandDispatcher(CommandDispatcher):

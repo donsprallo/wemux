@@ -12,7 +12,8 @@ def mbus():
     """A fixture that returns a message bus."""
     return messagebus.MessageBus(
         dispatcher.LocalCommandDispatcher(),
-        dispatcher.LocalEventDispatcher()
+        dispatcher.LocalEventDispatcher(),
+        dispatcher.LocalEventCollector()
     )
 
 

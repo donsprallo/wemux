@@ -15,10 +15,13 @@ class MessageBus:
     def __init__(
         self,
         command_dispatcher: dispatcher.CommandDispatcherFunc,
-        event_dispatcher: dispatcher.EventDispatcherFunc
+        event_dispatcher: dispatcher.EventDispatcherFunc,
+        event_collector: dispatcher.EventCollector
     ) -> None:
         self._command_dispatcher = command_dispatcher
         self._event_dispatcher = event_dispatcher
+        self._event_collection = dispatcher. \
+            EventCollection(event_collector)
         self._command_handlers: t.Dict[
             t.Type[message.Command],
             handler.CommandHandler
@@ -64,7 +67,10 @@ class MessageBus:
         """Handle an event. The event is sent to all event listeners. When an
         event listener raises an exception, the exception is caught and logged.
         The event is not send to the other listeners."""
-        self._event_dispatcher(self._event_listeners[type(event)], event)
+        self._event_collection.add(event)
+        for _event in self._event_collection:
+            event_listener = self._event_listeners[type(event)]
+            self._event_dispatcher(event_listener, _event)
 
     def handle(self, command: message.Command) -> t.Any:
         """Handle a command. The command is sent to the command handler.
@@ -75,4 +81,8 @@ class MessageBus:
         Raises:
             errors.CommandHandlerNotFoundError: when no handler is found.
         """
-        return self._command_dispatcher(self._command_handlers, command)
+        result = self._command_dispatcher(self._command_handlers, command)
+        for _event in self._event_collection:
+            event_listener = self._event_listeners[type(_event)]
+            self._event_dispatcher(event_listener, _event)
+        return result
