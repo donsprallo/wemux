@@ -1,3 +1,32 @@
 [build-system]
-requires = ["setuptools>=75.0"]
-build-backend = "setuptools.build_meta"
+requires = ["pdm-backend"]
+build-backend = "pdm.backend"
+
+[project]
+name = "wemux"
+version = "0.0.1"
+description = "A message bus."
+authors = [
+    { name = "donsprallo", email = "donsprallo@gmail.com" },
+]
+dependencies = [
+    "pydantic~=2.9",
+]
+requires-python = ">=3.12"
+readme = "README.md"
+license = { text = "MIT" }
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.12",
+]
+
+[tool.pdm]
+distribution = true
+
+[tool.pdm.dev-dependencies]
+test = [
+    "pytest>=8.3.3",
+]

@@ -15,9 +15,9 @@ class TestEventListener(messagebus.EventListener):
         self.is_handled = False
 
     def handle(
-            self,
-            bus: messagebus.MessageBus,
-            event: TestEvent
+        self,
+        bus: messagebus.MessageBus,
+        event: TestEvent
     ) -> None:
         self.is_handled = True
         event.is_handled = True

@@ -2,5 +2,7 @@
 .idea
 dist
 build
+.pdm-python
+.pdm-build
 __pycache__
 *.egg-info

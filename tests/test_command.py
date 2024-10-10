@@ -15,9 +15,9 @@ class TestCommandHandler(messagebus.CommandHandler):
     command data."""
 
     def handle(
-            self,
-            bus: messagebus.MessageBus,
-            command: TestCommand
+        self,
+        bus: messagebus.MessageBus,
+        command: TestCommand
     ) -> str:
         command.is_handled = True
         return command.data
@@ -27,9 +27,9 @@ class ExceptionCommandHandler(messagebus.CommandHandler):
     """A command handler that raises an exception."""
 
     def handle(
-            self,
-            bus: messagebus.MessageBus,
-            command: TestCommand
+        self,
+        bus: messagebus.MessageBus,
+        command: TestCommand
     ) -> str:
         raise Exception("test")
 
