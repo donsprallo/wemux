@@ -1,12 +1,10 @@
 import abc
-import logging
 import typing as t
 from collections import defaultdict
 
 from wemux import errors
 from wemux import message
-
-logger = logging.getLogger(__name__)
+from wemux import middleware
 
 T = t.TypeVar('T')
 E = t.TypeVar('E')
@@ -30,41 +28,6 @@ class EventListener:
     def handle(self, event: message.Event) -> None:
         """Call the event listener."""
         raise NotImplementedError
-
-
-class Middleware:
-    """A middleware is a class that can be used to intercept messages. The
-    middleware can be used to implement cross-cutting concerns. The methods
-    before, after and error are called at different points in the message
-    handling process."""
-
-    def before(self, msg: message.Message) -> None:
-        """Call the middleware before the message is handled."""
-        pass
-
-    def after(self, msg: message.Message) -> None:
-        """Call the middleware after the message is handled."""
-        pass
-
-    def error(self, msg: message.Message, ex: Exception) -> None:
-        """Call the middleware when an exception is raised."""
-        pass
-
-
-class LoggerMiddleware(Middleware):
-    """A simple middleware that logs messages."""
-
-    @t.override
-    def before(self, msg: message.Message) -> None:
-        logger.info(f"handle {msg}")
-
-    @t.override
-    def after(self, msg: message.Message) -> None:
-        logger.info(f"{msg} handled successfully.")
-
-    @t.override
-    def error(self, msg: message.Message, ex: Exception) -> None:
-        logger.error(ex)
 
 
 type CommandHandlerMap = t.Dict[t.Type[message.Command], CommandHandler]
@@ -111,8 +74,8 @@ class EventHandlerStrategy(abc.ABC):
 
 class LocalCommandHandlerStrategy(CommandHandlerStrategy):
 
-    def __init__(self, middleware: list[Middleware] | None = None) -> None:
-        self._middleware: list[Middleware] = middleware or []
+    def __init__(self, middlewares: list[middleware.Middleware] | None = None) -> None:
+        self._middlewares: list[middleware.Middleware] = middlewares or []
 
     def __call__(
         self,
@@ -124,22 +87,22 @@ class LocalCommandHandlerStrategy(CommandHandlerStrategy):
             raise errors.HandlerNotFoundError(
                 f"no handler for command {command}")
         try:
-            for middleware in self._middleware:
-                middleware.before(command)
+            for _middleware in self._middlewares:
+                _middleware.before(command)
             result = handler.handle(command)
-            for middleware in self._middleware:
-                middleware.after(command)
+            for _middleware in self._middlewares:
+                _middleware.after(command)
             return result
         except Exception as ex:
-            for middleware in self._middleware:
-                middleware.error(command, ex)
+            for _middleware in self._middlewares:
+                _middleware.error(command, ex)
             raise ex
 
 
 class LocalEventHandlerStrategy(EventHandlerStrategy):
 
-    def __init__(self, middleware: list[Middleware] | None = None) -> None:
-        self._middleware: list[Middleware] = middleware or []
+    def __init__(self, middlewares: list[middleware.Middleware] | None = None) -> None:
+        self._middlewares: list[middleware.Middleware] = middlewares or []
 
     def __call__(
         self,
@@ -148,14 +111,14 @@ class LocalEventHandlerStrategy(EventHandlerStrategy):
     ) -> None:
         for listener in event_listeners:
             try:
-                for middleware in self._middleware:
-                    middleware.before(event)
+                for _middleware in self._middlewares:
+                    _middleware.before(event)
                 listener.handle(event)
-                for middleware in self._middleware:
-                    middleware.after(event)
+                for _middleware in self._middlewares:
+                    _middleware.after(event)
             except Exception as ex:
-                for middleware in self._middleware:
-                    middleware.error(event, ex)
+                for _middleware in self._middlewares:
+                    _middleware.error(event, ex)
 
 
 class MessageBus:

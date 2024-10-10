@@ -6,6 +6,6 @@ from .message import Message
 from .message import Result
 from .messagebus import CommandHandler
 from .messagebus import EventListener
-from .messagebus import LoggerMiddleware
 from .messagebus import MessageBus
-from .messagebus import Middleware
+from .middleware import LoggerMiddleware
+from .middleware import Middleware
