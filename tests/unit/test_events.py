@@ -1,5 +1,7 @@
 import pytest
 
+from wemux import dispatcher
+from wemux import handler
 from wemux import message
 from wemux import messagebus
 
@@ -8,8 +10,8 @@ from wemux import messagebus
 def mbus():
     """A fixture that returns a message bus."""
     return messagebus.MessageBus(
-        messagebus.LocalCommandHandlerStrategy(),
-        messagebus.LocalEventHandlerStrategy()
+        dispatcher.LocalCommandDispatcher(),
+        dispatcher.LocalEventDispatcher()
     )
 
 
@@ -18,7 +20,7 @@ class TestEvent(message.Event):
     is_handled: bool = False
 
 
-class TestEventListener(messagebus.EventListener):
+class TestEventListener(handler.EventListener):
     """A simple event listener for the mock event. The listener set the
     is_called attribute of the event to True."""
 

@@ -1,6 +1,8 @@
 import pytest
 
+from wemux import dispatcher
 from wemux import errors
+from wemux import handler
 from wemux import message
 from wemux import messagebus
 
@@ -9,8 +11,8 @@ from wemux import messagebus
 def mbus():
     """A fixture that returns a message bus."""
     return messagebus.MessageBus(
-        messagebus.LocalCommandHandlerStrategy(),
-        messagebus.LocalEventHandlerStrategy()
+        dispatcher.LocalCommandDispatcher(),
+        dispatcher.LocalEventDispatcher()
     )
 
 
@@ -20,7 +22,7 @@ class TestCommand(message.Command):
     data: str | None = None
 
 
-class TestCommandHandler(messagebus.CommandHandler):
+class TestCommandHandler(handler.CommandHandler):
     """A simple handler for the mock command. The handler returns the
     command data."""
 
@@ -32,7 +34,7 @@ class TestCommandHandler(messagebus.CommandHandler):
         return command.data
 
 
-class ExceptionCommandHandler(messagebus.CommandHandler):
+class ExceptionCommandHandler(handler.CommandHandler):
     """A command handler that raises an exception."""
 
     def handle(
