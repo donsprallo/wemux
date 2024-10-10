@@ -1,5 +1,6 @@
 import pytest
 
+from wemux import message
 from wemux import messagebus
 
 
@@ -12,7 +13,7 @@ def mbus():
     )
 
 
-class TestEvent(messagebus.Event):
+class TestEvent(message.Event):
     """A simple mock event."""
     is_handled: bool = False
 

@@ -3,45 +3,13 @@ import logging
 import typing as t
 from collections import defaultdict
 
-import pydantic
-
 from wemux import errors
+from wemux import message
 
 logger = logging.getLogger(__name__)
 
 T = t.TypeVar('T')
 E = t.TypeVar('E')
-
-Message = t.Union['Event', 'Command']
-
-
-class Event(pydantic.BaseModel):
-    """Event is the base class for message bus events. The class inherits from
-    pydantic BaseModel. An event is something that has happened in the past.
-    Multiple listeners can listen to an event."""
-    model_config = pydantic.ConfigDict(arbitrary_types_allowed=True)
-
-    def __repr__(self) -> str:
-        return f"<{self.__class__.__name__}>"
-
-
-class Command(pydantic.BaseModel):
-    """Command is the base class for message bus commands. The class inherits
-    from pydantic BaseModel. A command is described by the fact that it is
-    executed immediately and can return a result."""
-    model_config = pydantic.ConfigDict(arbitrary_types_allowed=True)
-
-    def __repr__(self) -> str:
-        return f"<{self.__class__.__name__}>"
-
-
-class Result(pydantic.BaseModel):
-    """Result is the base class for message bus command results. The
-    class inherits from pydantic BaseModel."""
-    model_config = pydantic.ConfigDict(arbitrary_types_allowed=True)
-
-    def __repr__(self) -> str:
-        return f"<{self.__class__.__name__}>"
 
 
 class CommandHandler:
@@ -49,7 +17,7 @@ class CommandHandler:
     returns a result."""
 
     @abc.abstractmethod
-    def handle(self, command: Command) -> t.Any:
+    def handle(self, command: message.Command) -> t.Any:
         """Call the command handler."""
         raise NotImplementedError
 
@@ -59,7 +27,7 @@ class EventListener:
     nothing."""
 
     @abc.abstractmethod
-    def handle(self, event: Event) -> None:
+    def handle(self, event: message.Event) -> None:
         """Call the event listener."""
         raise NotImplementedError
 
@@ -70,15 +38,15 @@ class Middleware:
     before, after and error are called at different points in the message
     handling process."""
 
-    def before(self, message: Message) -> None:
+    def before(self, msg: message.Message) -> None:
         """Call the middleware before the message is handled."""
         pass
 
-    def after(self, message: Message) -> None:
+    def after(self, msg: message.Message) -> None:
         """Call the middleware after the message is handled."""
         pass
 
-    def error(self, message: Message, ex: Exception) -> None:
+    def error(self, msg: message.Message, ex: Exception) -> None:
         """Call the middleware when an exception is raised."""
         pass
 
@@ -87,25 +55,25 @@ class LoggerMiddleware(Middleware):
     """A simple middleware that logs messages."""
 
     @t.override
-    def before(self, message: Message) -> None:
-        logger.info(f"handle {message}")
+    def before(self, msg: message.Message) -> None:
+        logger.info(f"handle {msg}")
 
     @t.override
-    def after(self, message: Message) -> None:
-        logger.info(f"{message} handled successfully.")
+    def after(self, msg: message.Message) -> None:
+        logger.info(f"{msg} handled successfully.")
 
     @t.override
-    def error(self, message: Message, ex: Exception) -> None:
+    def error(self, msg: message.Message, ex: Exception) -> None:
         logger.error(ex)
 
 
-type CommandHandlerMap = t.Dict[t.Type[Command], CommandHandler]
+type CommandHandlerMap = t.Dict[t.Type[message.Command], CommandHandler]
 """A command handler map is a dictionary that maps a command to a command
 handler."""
 
 type CommandHandlerStrategyFunc = t.Callable[[
     CommandHandlerMap,
-    Command
+    message.Command
 ], t.Any]
 """The command handler strategy is a callable that takes a dictionary of
 command handlers and a command. The callable returns the result of the
@@ -113,7 +81,7 @@ command handler."""
 
 type EventHandlerStrategyFunc = t.Callable[[
     t.List[EventListener],
-    Event
+    message.Event
 ], None]
 """The event handler strategy is a callable that takes a list of event
 listeners and an event. The callable returns nothing."""
@@ -125,7 +93,7 @@ class CommandHandlerStrategy(abc.ABC):
     def __call__(
         self,
         command_handlers: CommandHandlerMap,
-        command: Command
+        command: message.Command
     ) -> t.Any:
         raise NotImplementedError
 
@@ -136,7 +104,7 @@ class EventHandlerStrategy(abc.ABC):
     def __call__(
         self,
         event_listeners: list[EventListener],
-        event: Event
+        event: message.Event
     ) -> None:
         raise NotImplementedError
 
@@ -148,8 +116,8 @@ class LocalCommandHandlerStrategy(CommandHandlerStrategy):
 
     def __call__(
         self,
-        command_handlers: t.Dict[t.Type[Command], CommandHandler],
-        command: Command
+        command_handlers: t.Dict[t.Type[message.Command], CommandHandler],
+        command: message.Command
     ) -> t.Any:
         handler = command_handlers.get(type(command))
         if handler is None:
@@ -176,7 +144,7 @@ class LocalEventHandlerStrategy(EventHandlerStrategy):
     def __call__(
         self,
         event_listeners: list[EventListener],
-        event: Event
+        event: message.Event
     ) -> None:
         for listener in event_listeners:
             try:
@@ -204,13 +172,13 @@ class MessageBus:
         self._command_strategy = command_strategy
         self._event_strategy = event_strategy
         self._command_handlers: t.Dict[
-            t.Type[Command],
+            t.Type[message.Command],
             CommandHandler
         ] = {}
         """The command handlers. Each command handler is called when a
         command is send to the bus."""
         self._event_listeners: t.Dict[
-            t.Type[Event],
+            t.Type[message.Event],
             t.List[EventListener]
         ] = defaultdict(list)
         """The event listeners. Each event listener is called when an
@@ -218,7 +186,7 @@ class MessageBus:
 
     def add_listener(
         self,
-        key: t.Type[Event],
+        key: t.Type[message.Event],
         listener: EventListener
     ) -> None:
         """Add an event listener to the bus."""
@@ -226,13 +194,13 @@ class MessageBus:
 
     def add_handler(
         self,
-        key: t.Type[Command],
+        key: t.Type[message.Command],
         handler: CommandHandler
     ) -> None:
         """Add a command handler to the bus."""
         self._command_handlers[key] = handler
 
-    def register_handler(self, command: t.Type[Command]) -> t.Callable:
+    def register_handler(self, command: t.Type[message.Command]) -> t.Callable:
         """A decorator to register a command handler. The decorator takes the
         command as an argument to identify the command."""
 
@@ -244,13 +212,13 @@ class MessageBus:
 
         return decorator
 
-    def emit(self, event: Event) -> None:
+    def emit(self, event: message.Event) -> None:
         """Handle an event. The event is sent to all event listeners. When an
         event listener raises an exception, the exception is caught and logged.
         The event is not send to the other listeners."""
         self._event_strategy(self._event_listeners[type(event)], event)
 
-    def handle(self, command: Command) -> t.Any:
+    def handle(self, command: message.Command) -> t.Any:
         """Handle a command. The command is sent to the command handler.
 
         Returns:

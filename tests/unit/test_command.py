@@ -1,6 +1,7 @@
 import pytest
 
 from wemux import errors
+from wemux import message
 from wemux import messagebus
 
 
@@ -13,7 +14,7 @@ def mbus():
     )
 
 
-class TestCommand(messagebus.Command):
+class TestCommand(message.Command):
     """A simple mock command."""
     is_handled: bool = False
     data: str | None = None
