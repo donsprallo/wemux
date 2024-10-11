@@ -17,5 +17,4 @@ from .messagebus import MessageBus
 from .middleware import LoggerMiddleware
 from .middleware import Middleware
 from .stream import EventStream
-from .stream import EventStreamReader
-from .stream import InMemoryEventStreamReader
+from .stream import InMemoryEventStream

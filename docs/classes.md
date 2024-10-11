@@ -79,23 +79,22 @@ classDiagram
 ```mermaid
 classDiagram
     namespace stream {
-        class EventStreamReader {
-            <<abstract>>
-            +read_events(): void*
-        }
-
         class EventStream {
-            <<class>>
-            +EventStream(reader: EventStreamReader)
-            +add(event: Event): void
+            <<abstract>>
+            -events: List~Event~
+            +push_event(event: Event): void
+            -read_events(): List~Event~*
+            -write_event(events: Event): void*
         }
 
-        class InMemoryEventStreamReader {
+        class InMemoryEventStream {
             <<class>>
+            +EventStream()
+            -read_events(): List~Event~
+            -write_event(events: Event): void
         }
     }
-    EventStreamReader <|-- InMemoryEventStreamReader
-    EventStreamReader *-- EventStream: read from
+    EventStream <|-- InMemoryEventStream
 ```
 
 ```mermaid
@@ -136,7 +135,7 @@ classDiagram
             +MessageBus(
             command_dispatcher: CommandDispatcher,
             event_dispatcher: EventDispatcher,
-            event_collector: EventCollector
+            event_stream: EventStream
             )
             +add_listener(key: Type~Event~, listener: EventListener): void
             +add_handler(key: Type~Command~, handler: CommandHandler): void
@@ -148,5 +147,5 @@ classDiagram
 
     MessageBus --* CommandDispatcher: dispatch command
     MessageBus --* EventDispatcher: dispatch event
-    MessageBus --* EventStreamReader: collect events
+    MessageBus --* EventStream: collect events
 ```

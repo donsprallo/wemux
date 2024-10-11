@@ -17,12 +17,11 @@ class MessageBus:
         self,
         command_dispatcher: dispatcher.CommandDispatcherFunc,
         event_dispatcher: dispatcher.EventDispatcherFunc,
-        stream_reader: stream.EventStreamReader
+        event_stream: stream.EventStream
     ) -> None:
         self._command_dispatcher = command_dispatcher
         self._event_dispatcher = event_dispatcher
-        self._event_stream = stream. \
-            EventStream(stream_reader)
+        self._event_stream = event_stream
         self._command_handlers: t.Dict[
             t.Type[message.Command],
             handler.CommandHandler
@@ -68,7 +67,7 @@ class MessageBus:
         """Handle an event. The event is sent to all event listeners. When an
         event listener raises an exception, the exception is caught and logged.
         The event is not send to the other listeners."""
-        self._event_stream.add(event)
+        self._event_stream.push_event(event)
         self._emit_events()
 
     def handle(self, command: message.Command) -> t.Any:
@@ -95,5 +94,5 @@ def create_in_memory_message_bus() -> MessageBus:
     return MessageBus(
         dispatcher.InMemoryCommandDispatcher(),
         dispatcher.InMemoryEventDispatcher(),
-        stream.InMemoryEventStreamReader()
+        stream.InMemoryEventStream()
     )
