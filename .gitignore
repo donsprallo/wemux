@@ -1,9 +1,15 @@
 .venv
 .idea
-dist
-build
+
 .pdm-python
 .pdm-build
+
 .coverage
+htmlcov
+coverage.xml
+
+dist
+build
+
 __pycache__
 *.egg-info
