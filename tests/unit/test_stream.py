@@ -1,7 +1,7 @@
 import pytest
 
-from tests.unit.fakes import FakeEvent
 from wemux import stream
+from .fakes import FakeEvent
 
 
 class TestInMemoryEventStream:

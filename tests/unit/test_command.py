@@ -1,10 +1,10 @@
 import pytest
 
-from tests.unit.fakes import FakeCommand
-from tests.unit.fakes import FakeCommandHandler
 from wemux import errors
 from wemux import handler
 from wemux import messagebus
+from .fakes import FakeCommand
+from .fakes import FakeCommandHandler
 
 
 @pytest.fixture

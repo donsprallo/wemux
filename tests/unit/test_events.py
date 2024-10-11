@@ -1,8 +1,8 @@
 import pytest
 
-from tests.unit.fakes import FakeEvent
-from tests.unit.fakes import FakeEventListener
 from wemux import messagebus
+from .fakes import FakeEvent
+from .fakes import FakeEventListener
 
 
 @pytest.fixture
