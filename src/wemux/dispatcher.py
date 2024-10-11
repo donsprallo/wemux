@@ -4,7 +4,6 @@ import typing as t
 from wemux import errors
 from wemux import handler
 from wemux import message
-from wemux import middleware
 
 type CommandHandlerMap = t.Dict[t.Type[message.Command], handler.CommandHandler]
 """A command handler map is a dictionary that maps a command type to a specific
@@ -24,6 +23,10 @@ class CommandDispatcher(abc.ABC):
         """Dispatch a command to a command handler."""
         raise NotImplementedError
 
+    def error(self, command: message.Command, ex: Exception) -> None:
+        """Handle an error."""
+        pass
+
 
 class EventDispatcher(abc.ABC):
     """The EventDispatcher is an abstract class that dispatches events to event
@@ -38,11 +41,12 @@ class EventDispatcher(abc.ABC):
         """Dispatch an event to a list of event listeners."""
         raise NotImplementedError
 
+    def error(self, event: message.Event, ex: Exception) -> None:
+        """Handle an error."""
+        pass
+
 
 class InMemoryCommandDispatcher(CommandDispatcher):
-
-    def __init__(self, middlewares: list[middleware.Middleware] | None = None) -> None:
-        self._middlewares: list[middleware.Middleware] = middlewares or []
 
     def dispatch(
         self,
@@ -54,22 +58,13 @@ class InMemoryCommandDispatcher(CommandDispatcher):
             raise errors.HandlerNotFoundError(
                 f"no handler for command {command}")
         try:
-            for _middleware in self._middlewares:
-                _middleware.before(command)
-            result = _handler.handle(command)
-            for _middleware in self._middlewares:
-                _middleware.after(command)
-            return result
+            return _handler.handle(command)
         except Exception as ex:
-            for _middleware in self._middlewares:
-                _middleware.error(command, ex)
+            self.error(command, ex)
             raise ex
 
 
 class InMemoryEventDispatcher(EventDispatcher):
-
-    def __init__(self, middlewares: list[middleware.Middleware] | None = None) -> None:
-        self._middlewares: list[middleware.Middleware] = middlewares or []
 
     def dispatch(
         self,
@@ -78,11 +73,6 @@ class InMemoryEventDispatcher(EventDispatcher):
     ) -> None:
         for listener in event_listeners:
             try:
-                for _middleware in self._middlewares:
-                    _middleware.before(event)
                 listener.handle(event)
-                for _middleware in self._middlewares:
-                    _middleware.after(event)
             except Exception as ex:
-                for _middleware in self._middlewares:
-                    _middleware.error(event, ex)
+                self.error(event, ex)

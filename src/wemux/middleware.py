@@ -10,12 +10,8 @@ class Middleware:
     before, after and error are called at different points in the message
     handling process."""
 
-    def before(self, msg: message.Message) -> None:
+    def handle(self, msg: message.Message) -> None:
         """Call the middleware before the message is handled."""
-        pass
-
-    def after(self, msg: message.Message) -> None:
-        """Call the middleware after the message is handled."""
         pass
 
     def error(self, msg: message.Message, ex: Exception) -> None:
@@ -34,12 +30,8 @@ class LoggerMiddleware(Middleware):
         self._logger = logger
 
     @t.override
-    def before(self, msg: message.Message) -> None:
+    def handle(self, msg: message.Message) -> None:
         self._logger.info(f"handle {msg}")
-
-    @t.override
-    def after(self, msg: message.Message) -> None:
-        self._logger.info(f"{msg} handled successfully.")
 
     @t.override
     def error(self, msg: message.Message, ex: Exception) -> None:
