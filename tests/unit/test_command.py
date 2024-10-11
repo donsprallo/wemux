@@ -1,8 +1,9 @@
 import pytest
 
+from tests.unit.fakes import FakeCommand
+from tests.unit.fakes import FakeCommandHandler
 from wemux import errors
 from wemux import handler
-from wemux import message
 from wemux import messagebus
 
 
@@ -10,24 +11,6 @@ from wemux import messagebus
 def mbus():
     """A fixture that returns a message bus."""
     return messagebus.create_in_memory_message_bus()
-
-
-class FakeCommand(message.Command):
-    """A simple mock command."""
-    is_handled: bool = False
-    data: str | None = None
-
-
-class FakeCommandHandler(handler.CommandHandler):
-    """A simple handler for the mock command. The handler returns the
-    command data."""
-
-    def handle(
-        self,
-        command: FakeCommand
-    ) -> str:
-        command.is_handled = True
-        return command.data
 
 
 class ExceptionCommandHandler(handler.CommandHandler):
