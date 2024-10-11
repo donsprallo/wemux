@@ -6,13 +6,13 @@ from .dispatcher import InMemoryEventDispatcher
 from .errors import HandlerNotFoundError
 from .errors import MessageBusError
 from .handler import CommandHandler
-from .handler import EventListener
+from .handler import EventHandler
+from .handler import Handler
+from .handler import LoggerHandler
 from .message import Command
 from .message import Event
 from .message import Message
 from .message import Result
 from .messagebus import MessageBus
-from .middleware import LoggerMiddleware
-from .middleware import Middleware
 from .stream import EventStream
 from .stream import InMemoryEventStream

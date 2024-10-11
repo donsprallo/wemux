@@ -25,7 +25,7 @@ class FakeEvent(message.Event):
     is_handled: bool = False
 
 
-class FakeEventListener(handler.EventListener):
+class FakeEventHandler(handler.EventHandler):
     """A simple event listener for the mock event. The listener set the
     is_called attribute of the event to True."""
 

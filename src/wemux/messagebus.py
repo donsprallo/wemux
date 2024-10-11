@@ -28,20 +28,20 @@ class MessageBus:
         ] = {}
         """The command handlers. Each command handler is called when a
         command is send to the bus."""
-        self._event_listeners: t.Dict[
+        self._event_handlers: t.Dict[
             t.Type[message.Event],
-            t.List[handler.EventListener]
+            t.List[handler.EventHandler]
         ] = defaultdict(list)
-        """The event listeners. Each event listener is called when an
+        """The event handlers. Each event handler is called when an
         event is send to the bus."""
 
     def add_listener(
         self,
         key: t.Type[message.Event],
-        listener: handler.EventListener
+        hdl: handler.EventHandler
     ) -> None:
-        """Add an event listener to the bus."""
-        self._event_listeners[key].append(listener)
+        """Add an event handler to the bus."""
+        self._event_handlers[key].append(hdl)
 
     def add_handler(
         self,
@@ -86,9 +86,9 @@ class MessageBus:
 
     def _emit_events(self) -> None:
         for _event in self._event_stream:
-            event_listener = self._event_listeners[type(_event)]
+            _handlers = self._event_handlers[type(_event)]
             self._event_dispatcher.dispatch(
-                event_listener, _event)
+                _handlers, _event)
 
 
 def create_in_memory_message_bus() -> MessageBus:

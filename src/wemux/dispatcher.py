@@ -17,15 +17,11 @@ class CommandDispatcher(abc.ABC):
     @abc.abstractmethod
     def dispatch(
         self,
-        command_handlers: CommandHandlerMap,
+        handlers: CommandHandlerMap,
         command: message.Command
     ) -> t.Any:
         """Dispatch a command to a command handler."""
         raise NotImplementedError
-
-    def error(self, command: message.Command, ex: Exception) -> None:
-        """Handle an error."""
-        pass
 
 
 class EventDispatcher(abc.ABC):
@@ -35,32 +31,28 @@ class EventDispatcher(abc.ABC):
     @abc.abstractmethod
     def dispatch(
         self,
-        event_listeners: list[handler.EventListener],
+        handlers: list[handler.EventHandler],
         event: message.Event
     ) -> None:
         """Dispatch an event to a list of event listeners."""
         raise NotImplementedError
-
-    def error(self, event: message.Event, ex: Exception) -> None:
-        """Handle an error."""
-        pass
 
 
 class InMemoryCommandDispatcher(CommandDispatcher):
 
     def dispatch(
         self,
-        command_handlers: CommandHandlerMap,
+        handlers: CommandHandlerMap,
         command: message.Command
     ) -> t.Any:
-        _handler = command_handlers.get(type(command))
+        _handler = handlers.get(type(command))
         if _handler is None:
             raise errors.HandlerNotFoundError(
                 f"no handler for command {command}")
         try:
             return _handler.handle(command)
         except Exception as ex:
-            self.error(command, ex)
+            _handler.error(command, ex)
             raise ex
 
 
@@ -68,11 +60,11 @@ class InMemoryEventDispatcher(EventDispatcher):
 
     def dispatch(
         self,
-        event_listeners: list[handler.EventListener],
+        handlers: list[handler.EventHandler],
         event: message.Event
     ) -> None:
-        for listener in event_listeners:
+        for _handler in handlers:
             try:
-                listener.handle(event)
+                _handler.handle(event)
             except Exception as ex:
-                self.error(event, ex)
+                _handler.error(event, ex)
