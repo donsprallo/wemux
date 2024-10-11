@@ -51,3 +51,22 @@ class TestInMemoryEventStream:
         # Write does not do anything.
         assert _stream._events == []
         assert _stream._read_events() == []
+
+    def test_can_add_event_while_iteration(self):
+        _stream = stream.InMemoryEventStream()
+        _event1 = FakeEvent()
+        _event2 = FakeEvent()
+        _stream.push_event(_event1)
+        # Read the first event from the stream. After the event is read,
+        # the stream is empty.
+        assert _stream._events == [_event1]
+        assert next(_stream) == _event1
+        assert _stream._events == []
+        # Next we add a second event to the stream. The second event is
+        # read from the stream. The stream is empty after the second event
+        # is read.
+        _stream.push_event(_event2)
+        assert _stream._events == [_event2]
+        assert next(_stream) == _event2
+        with pytest.raises(StopIteration):
+            next(_stream)
