@@ -10,23 +10,10 @@ type CommandHandlerMap = t.Dict[t.Type[message.Command], handler.CommandHandler]
 """A command handler map is a dictionary that maps a command type to a specific
 command handler."""
 
-type CommandDispatcherFunc = t.Callable[[
-    CommandHandlerMap,
-    message.Command
-], t.Any]
-"""The command dispatcher is a callable that takes a dictionary of
-command handlers and a command. The callable returns the result of the
-command handler."""
-
-type EventDispatcherFunc = t.Callable[[
-    t.List[handler.EventListener],
-    message.Event
-], None]
-"""The event dispatcher is a callable that takes a list of event
-listeners and an event. The callable returns nothing."""
-
 
 class CommandDispatcher(abc.ABC):
+    """The CommandDispatcher is an abstract class that dispatches commands to
+    command handlers. A derivative class must implement the dispatch method."""
 
     @abc.abstractmethod
     def dispatch(
@@ -34,17 +21,13 @@ class CommandDispatcher(abc.ABC):
         command_handlers: CommandHandlerMap,
         command: message.Command
     ) -> t.Any:
+        """Dispatch a command to a command handler."""
         raise NotImplementedError
-
-    def __call__(
-        self,
-        command_handlers: CommandHandlerMap,
-        command: message.Command
-    ) -> t.Any:
-        return self.dispatch(command_handlers, command)
 
 
 class EventDispatcher(abc.ABC):
+    """The EventDispatcher is an abstract class that dispatches events to event
+    listeners. A derivative class must implement the dispatch method."""
 
     @abc.abstractmethod
     def dispatch(
@@ -52,14 +35,8 @@ class EventDispatcher(abc.ABC):
         event_listeners: list[handler.EventListener],
         event: message.Event
     ) -> None:
+        """Dispatch an event to a list of event listeners."""
         raise NotImplementedError
-
-    def __call__(
-        self,
-        event_listeners: list[handler.EventListener],
-        event: message.Event
-    ) -> None:
-        self.dispatch(event_listeners, event)
 
 
 class InMemoryCommandDispatcher(CommandDispatcher):

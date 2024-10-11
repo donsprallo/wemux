@@ -15,8 +15,8 @@ class MessageBus:
 
     def __init__(
         self,
-        command_dispatcher: dispatcher.CommandDispatcherFunc,
-        event_dispatcher: dispatcher.EventDispatcherFunc,
+        command_dispatcher: dispatcher.CommandDispatcher,
+        event_dispatcher: dispatcher.EventDispatcher,
         event_stream: stream.EventStream
     ) -> None:
         self._command_dispatcher = command_dispatcher
@@ -79,14 +79,16 @@ class MessageBus:
         Raises:
             errors.CommandHandlerNotFoundError: when no handler is found.
         """
-        result = self._command_dispatcher(self._command_handlers, command)
+        result = self._command_dispatcher.dispatch(
+            self._command_handlers, command)
         self._emit_events()
         return result
 
     def _emit_events(self) -> None:
         for _event in self._event_stream:
             event_listener = self._event_listeners[type(_event)]
-            self._event_dispatcher(event_listener, _event)
+            self._event_dispatcher.dispatch(
+                event_listener, _event)
 
 
 def create_in_memory_message_bus() -> MessageBus:
