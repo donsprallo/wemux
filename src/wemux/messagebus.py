@@ -4,6 +4,7 @@ from collections import defaultdict
 from wemux import dispatcher
 from wemux import handler
 from wemux import message
+from wemux import stream
 
 
 class MessageBus:
@@ -16,11 +17,11 @@ class MessageBus:
         self,
         command_dispatcher: dispatcher.CommandDispatcherFunc,
         event_dispatcher: dispatcher.EventDispatcherFunc,
-        stream_reader: dispatcher.EventStreamReader
+        stream_reader: stream.EventStreamReader
     ) -> None:
         self._command_dispatcher = command_dispatcher
         self._event_dispatcher = event_dispatcher
-        self._event_stream = dispatcher. \
+        self._event_stream = stream. \
             EventStream(stream_reader)
         self._command_handlers: t.Dict[
             t.Type[message.Command],

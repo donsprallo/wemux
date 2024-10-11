@@ -7,8 +7,8 @@ from wemux import message
 from wemux import middleware
 
 type CommandHandlerMap = t.Dict[t.Type[message.Command], handler.CommandHandler]
-"""A command handler map is a dictionary that maps a command to a command
-handler."""
+"""A command handler map is a dictionary that maps a command type to a specific
+command handler."""
 
 type CommandDispatcherFunc = t.Callable[[
     CommandHandlerMap,
@@ -24,35 +24,6 @@ type EventDispatcherFunc = t.Callable[[
 ], None]
 """The event dispatcher is a callable that takes a list of event
 listeners and an event. The callable returns nothing."""
-
-
-class EventStreamReader(abc.ABC):
-
-    @abc.abstractmethod
-    def read_events(self) -> t.Sequence[message.Event]:
-        raise NotImplementedError
-
-
-class EventStream(t.Iterator[message.Event]):
-
-    def __init__(self, stream_reader: EventStreamReader) -> None:
-        self._stream_reader = stream_reader
-        self._events: list[message.Event] = []
-
-    def add(self, event: message.Event) -> None:
-        self._events.append(event)
-
-    def __iter__(self) -> t.Self:
-        return self
-
-    def __next__(self) -> message.Event:
-        if not self._events:
-            raise StopIteration
-        # Collect events from the collector.
-        for event in self._stream_reader.read_events():
-            self._events.append(event)
-        # return the first event.
-        return self._events.pop(0)
 
 
 class CommandDispatcher(abc.ABC):
@@ -91,13 +62,7 @@ class EventDispatcher(abc.ABC):
         self.dispatch(event_listeners, event)
 
 
-class LocalEventStreamReader(EventStreamReader):
-
-    def read_events(self) -> t.Sequence[message.Event]:
-        return []
-
-
-class LocalCommandDispatcher(CommandDispatcher):
+class InMemoryCommandDispatcher(CommandDispatcher):
 
     def __init__(self, middlewares: list[middleware.Middleware] | None = None) -> None:
         self._middlewares: list[middleware.Middleware] = middlewares or []
@@ -124,7 +89,7 @@ class LocalCommandDispatcher(CommandDispatcher):
             raise ex
 
 
-class LocalEventDispatcher(EventDispatcher):
+class InMemoryEventDispatcher(EventDispatcher):
 
     def __init__(self, middlewares: list[middleware.Middleware] | None = None) -> None:
         self._middlewares: list[middleware.Middleware] = middlewares or []

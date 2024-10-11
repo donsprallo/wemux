@@ -2,11 +2,8 @@ from .dispatcher import CommandDispatcher
 from .dispatcher import CommandDispatcherFunc
 from .dispatcher import EventDispatcher
 from .dispatcher import EventDispatcherFunc
-from .dispatcher import EventStream
-from .dispatcher import EventStreamReader
-from .dispatcher import LocalCommandDispatcher
-from .dispatcher import LocalEventDispatcher
-from .dispatcher import LocalEventStreamReader
+from .dispatcher import InMemoryCommandDispatcher
+from .dispatcher import InMemoryEventDispatcher
 from .errors import HandlerNotFoundError
 from .errors import MessageBusError
 from .handler import CommandHandler
@@ -18,3 +15,6 @@ from .message import Result
 from .messagebus import MessageBus
 from .middleware import LoggerMiddleware
 from .middleware import Middleware
+from .stream import EventStream
+from .stream import EventStreamReader
+from .stream import InMemoryEventStreamReader

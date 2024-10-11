@@ -78,6 +78,28 @@ classDiagram
 
 ```mermaid
 classDiagram
+    namespace stream {
+        class EventStreamReader {
+            <<abstract>>
+            +read_events(): void*
+        }
+
+        class EventStream {
+            <<class>>
+            +EventStream(reader: EventStreamReader)
+            +add(event: Event): void
+        }
+
+        class InMemoryEventStreamReader {
+            <<class>>
+        }
+    }
+    EventStreamReader <|-- InMemoryEventStreamReader
+    EventStreamReader *-- EventStream: read from
+```
+
+```mermaid
+classDiagram
     namespace dispatcher {
         class CommandDispatcher {
             <<abstract>>
@@ -86,34 +108,24 @@ classDiagram
 
         class EventDispatcher {
             <<abstract>>
-            +dispatch(listeners: list[EventListener], event: Event): void*
+            +dispatch(listeners: List~EventListener~, event: Event): void*
         }
 
-        class EventCollector {
-            <<abstract>>
-            +collect(): void*
-        }
-
-        class LocalEventCollector {
+        class InMemoryCommandDispatcher {
             <<class>>
-        }
-
-        class LocalCommandDispatcher {
-            <<class>>
-            +LocalCommandDispatcher(middlewares: list[Middleware])
+            +InMemoryCommandDispatcher(middlewares: List~Middleware~)
             +dispatch(handlers: CommandHandlerMap, command: Command): void
         }
 
-        class LocalEventDispatcher {
+        class InMemoryEventDispatcher {
             <<class>>
-            +LocalEventDispatcher(middlewares: list[Middleware])
-            +dispatch(listeners: list[EventListener], event: Event
+            +InMemoryventDispatcher(middlewares: List~Middleware~)
+            +dispatch(listeners: List~ventListener~, event: Event
             ): void
         }
     }
-    CommandDispatcher <|-- LocalCommandDispatcher
-    EventDispatcher <|-- LocalEventDispatcher
-    EventCollector <|-- LocalEventCollector
+    CommandDispatcher <|-- InMemoryCommandDispatcher
+    EventDispatcher <|-- InMemoryEventDispatcher
 ```
 
 ```mermaid
@@ -126,8 +138,8 @@ classDiagram
             event_dispatcher: EventDispatcher,
             event_collector: EventCollector
             )
-            +add_listener(key: Type[Event], listener: EventListener): void
-            +add_handler(key: Type[Command], handler: CommandHandler): void
+            +add_listener(key: Type~Event~, listener: EventListener): void
+            +add_handler(key: Type~Command~, handler: CommandHandler): void
             +emit(event: Event): void
             +handle(command: Command): Any
             #emit_events(): void
