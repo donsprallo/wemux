@@ -29,4 +29,5 @@ distribution = true
 [tool.pdm.dev-dependencies]
 test = [
     "pytest>=8.3.3",
+    "pytest-cov>=5.0.0",
 ]
