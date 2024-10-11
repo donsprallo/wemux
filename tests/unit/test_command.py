@@ -12,19 +12,19 @@ def mbus():
     return messagebus.create_in_memory_message_bus()
 
 
-class TestCommand(message.Command):
+class FakeCommand(message.Command):
     """A simple mock command."""
     is_handled: bool = False
     data: str | None = None
 
 
-class TestCommandHandler(handler.CommandHandler):
+class FakeCommandHandler(handler.CommandHandler):
     """A simple handler for the mock command. The handler returns the
     command data."""
 
     def handle(
         self,
-        command: TestCommand
+        command: FakeCommand
     ) -> str:
         command.is_handled = True
         return command.data
@@ -35,17 +35,17 @@ class ExceptionCommandHandler(handler.CommandHandler):
 
     def handle(
         self,
-        command: TestCommand
+        command: FakeCommand
     ) -> str:
         raise Exception("test")
 
 
 def test_handle_command_must_call_handler(mbus):
     mbus.add_handler(
-        TestCommand,
-        TestCommandHandler()
+        FakeCommand,
+        FakeCommandHandler()
     )
-    expected = TestCommand(data="test")
+    expected = FakeCommand(data="test")
     result: str = mbus.handle(expected)
 
     assert result == expected.data
@@ -53,7 +53,7 @@ def test_handle_command_must_call_handler(mbus):
 
 
 def test_handle_command_must_raise_if_no_handler(mbus):
-    cmd = TestCommand(data="not found")
+    cmd = FakeCommand(data="not found")
     with pytest.raises(errors.HandlerNotFoundError):
         mbus.handle(cmd)
     assert cmd.is_handled is False
@@ -61,11 +61,11 @@ def test_handle_command_must_raise_if_no_handler(mbus):
 
 def test_handle_command_must_raise_if_handler_raises(mbus):
     mbus.add_handler(
-        TestCommand,
+        FakeCommand,
         ExceptionCommandHandler()
     )
 
-    cmd = TestCommand(data="exception")
+    cmd = FakeCommand(data="exception")
     with pytest.raises(Exception):
         mbus.handle(cmd)
     assert cmd.is_handled is False
@@ -73,10 +73,10 @@ def test_handle_command_must_raise_if_handler_raises(mbus):
 
 def test_register_handler_must_be_handled(mbus):
     mbus.register_handler(
-        TestCommand
-    )(TestCommandHandler)
+        FakeCommand
+    )(FakeCommandHandler)
 
-    cmd = TestCommand()
+    cmd = FakeCommand()
     mbus.handle(cmd)
 
     assert cmd.is_handled is True

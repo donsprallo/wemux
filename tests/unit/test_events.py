@@ -11,12 +11,12 @@ def mbus():
     return messagebus.create_in_memory_message_bus()
 
 
-class TestEvent(message.Event):
+class FakeEvent(message.Event):
     """A simple mock event."""
     is_handled: bool = False
 
 
-class TestEventListener(handler.EventListener):
+class FakeEventListener(handler.EventListener):
     """A simple event listener for the mock event. The listener set the
     is_called attribute of the event to True."""
 
@@ -26,27 +26,27 @@ class TestEventListener(handler.EventListener):
 
     def handle(
         self,
-        event: TestEvent
+        event: FakeEvent
     ) -> None:
         self.is_handled = True
         event.is_handled = True
 
 
 def test_handle_event_must_call_listener(mbus):
-    listener1 = TestEventListener()
-    listener2 = TestEventListener()
+    listener1 = FakeEventListener()
+    listener2 = FakeEventListener()
 
     mbus.add_listener(
-        TestEvent,
+        FakeEvent,
         listener1
     )
 
     mbus.add_listener(
-        TestEvent,
+        FakeEvent,
         listener2
     )
 
-    expected = TestEvent()
+    expected = FakeEvent()
     mbus.emit(expected)
 
     assert expected.is_handled is True
