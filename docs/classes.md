@@ -145,4 +145,8 @@ classDiagram
             #emit_events(): void
         }
     }
+
+    MessageBus --* CommandDispatcher: dispatch command
+    MessageBus --* EventDispatcher: dispatch event
+    MessageBus --* EventStreamReader: collect events
 ```

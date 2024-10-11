@@ -1,20 +1,14 @@
 import pytest
 
-from wemux import dispatcher
 from wemux import handler
 from wemux import message
 from wemux import messagebus
-from wemux import stream
 
 
 @pytest.fixture
 def mbus():
     """A fixture that returns a message bus."""
-    return messagebus.MessageBus(
-        dispatcher.InMemoryCommandDispatcher(),
-        dispatcher.InMemoryEventDispatcher(),
-        stream.InMemoryEventStreamReader()
-    )
+    return messagebus.create_in_memory_message_bus()
 
 
 class TestEvent(message.Event):

@@ -88,3 +88,12 @@ class MessageBus:
         for _event in self._event_stream:
             event_listener = self._event_listeners[type(_event)]
             self._event_dispatcher(event_listener, _event)
+
+
+def create_in_memory_message_bus() -> MessageBus:
+    """Create an in memory message bus."""
+    return MessageBus(
+        dispatcher.InMemoryCommandDispatcher(),
+        dispatcher.InMemoryEventDispatcher(),
+        stream.InMemoryEventStreamReader()
+    )
