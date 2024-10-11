@@ -26,6 +26,16 @@ classifiers = [
 [tool.pdm]
 distribution = true
 
+[tool.ruff]
+line-length = 80
+
+[tool.ruff.format]
+quote-style = "single"
+docstring-code-format = true
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
 [tool.pdm.dev-dependencies]
 test = [
     "pytest>=8.3.3",
