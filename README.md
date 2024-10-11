@@ -40,5 +40,5 @@ pdm run pytest --cov=wemux --cov-report=TYPE
 Run linter with [ruff](https://docs.astral.sh/ruff).
 
 ```bash
-pdm run ruff --check
+pdm run ruff check
 ```
