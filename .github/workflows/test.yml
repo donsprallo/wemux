@@ -32,3 +32,6 @@ jobs:
         run: pdm install
       - name: Run tests
         run: pdm run pytest --cov=wemux
+      - name: Runt linter
+        run: pdm run ruff check --output-format=github
+        continue-on-error: true
