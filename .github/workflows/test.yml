@@ -1,4 +1,4 @@
-name: Development wemux package
+name: Tests
 
 on: [ push ]
 
