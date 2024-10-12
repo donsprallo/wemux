@@ -27,10 +27,10 @@ class FakeCommandHandler(handler.CommandHandler[str | None]):
         self._err = err
 
     def handle(self, cmd: FakeCommand) -> str | None:
-        self.is_handled = True
-        cmd.is_handled = True
         if self._err:
             raise self._err
+        self.is_handled = True
+        cmd.is_handled = True
         return cmd.data
 
 
@@ -44,8 +44,8 @@ class FakeEventHandler(handler.EventHandler):
         self._err = err
 
     def handle(self, event: FakeEvent) -> None:
-        self.is_handled = True
-        event.counter += 1
         if self._err:
             raise self._err
+        self.is_handled = True
+        event.counter += 1
         return self.next(event)

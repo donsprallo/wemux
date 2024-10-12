@@ -35,7 +35,7 @@ class MessageBus:
         """The event handlers. Each event handler is called when an
         event is send to the bus."""
 
-    def add_listener(
+    def register_event_handler(
         self,
         key: t.Type[message.Event],
         hdl: handler.EventHandler
@@ -43,7 +43,7 @@ class MessageBus:
         """Add an event handler to the bus."""
         self._event_handlers[key].append(hdl)
 
-    def add_handler(
+    def register_command_handler(
         self,
         key: t.Type[message.Command],
         hdl: handler.CommandHandler
@@ -51,14 +51,27 @@ class MessageBus:
         """Add a command handler to the bus."""
         self._command_handlers[key] = hdl
 
-    def register_handler(self, command: t.Type[message.Command]) -> t.Callable:
+    def register_handler(
+        self,
+        command: t.Type[message.Message],
+        *args: t.Any,
+        **kwargs: t.Any
+    ) -> t.Callable:
         """A decorator to register a command handler. The decorator takes the
         command as an argument to identify the command."""
 
         def decorator(
-            hdl: t.Type[handler.CommandHandler]
-        ) -> t.Type[handler.CommandHandler]:
-            self.add_handler(command, hdl())
+            hdl: t.Type[handler.Handler]
+        ) -> t.Type[handler.Handler]:
+            if issubclass(hdl, handler.CommandHandler):
+                self.register_command_handler(
+                    command, hdl(*args, **kwargs))  # noqa
+            elif issubclass(hdl, handler.EventHandler):
+                self.register_event_handler(
+                    command, hdl(*args, **kwargs))  # noqa
+            else:
+                raise ValueError("handler must be a CommandHandler "
+                                 "or EventHandler")
             return hdl
 
         return decorator

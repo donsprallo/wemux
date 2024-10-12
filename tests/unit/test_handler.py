@@ -50,10 +50,10 @@ class TestEventHandler:
             _handler1.handle(_event)
 
         assert _handler1.is_handled is True
-        assert _handler2.is_handled is True
+        assert _handler2.is_handled is False
         assert _handler3.is_handled is False
         assert _handler.is_handled is False
-        assert _event.counter == 2
+        assert _event.counter == 1
 
 
 class TestCommandHandler:
@@ -85,8 +85,8 @@ class TestCommandHandler:
         with pytest.raises(Exception):
             _handler.handle(_command)
 
-        assert _handler.is_handled is True
-        assert _command.is_handled is True
+        assert _handler.is_handled is False
+        assert _command.is_handled is False
 
     def test_can_chain_handler(self):
         _logger = logging.getLogger(__name__)
