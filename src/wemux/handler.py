@@ -4,53 +4,70 @@ import typing as t
 
 from wemux import message
 
-T = t.TypeVar('T')
-K = t.TypeVar('K')
+HT = t.TypeVar('HT', bound='Handler')
+ET = t.TypeVar('ET', bound=Exception)
+MT = t.TypeVar('MT', bound=message.Message)
+RT = t.TypeVar('RT')
 
 
-class Handler(abc.ABC, t.Generic[T, K]):
+class Handler(abc.ABC, t.Generic[MT, RT]):
     """A middleware is a class that can be used to intercept messages. The
     middleware can be used to implement cross-cutting concerns."""
 
     def __init__(self):
-        self._next: t.Optional['Handler'] = None
-        """The next middleware in the chain. When no middleware is available,
-        the attribute is None. In this case, the middleware ends here."""
+        self._next: t.Optional[t.Self] = None
+        """The next handler in the chain. When no handler is available,
+        the attribute is None. In this case, the handler ends here."""
+        self._prev: t.Optional[t.Self] = None
+        """The previous handler in the chain. When no handler is available,
+        the attribute is None. In this case, the handler is the first
+        handler in the chain."""
 
-    def chain(self, middleware: 'Handler') -> 'Handler':
+    def chain(self, handler: HT) -> HT:
         """Chain the middleware. This method returns the middleware that was
         passed to the method. This allows to chain multiple middlewares in a
         single line."""
-        self._next = middleware
-        return middleware
+        self._next = handler
+        handler._prev = self
+        return handler
 
-    def next(self, msg: T, ex: Exception | None = None) -> K:
+    def next(self, msg: MT, ex: Exception | None = None) -> RT:
         """Call the next middleware in the chain. When an exception is
         provided, the error method is called. Otherwise, the handle method
         is called. When no next middleware is available, the method does
         nothing."""
-        if self._next is not None:
+        # The chain ends here.
+        if self._next is None:
             if ex is not None:
-                self._next.error(msg, ex)
-            else:
-                return self._next.handle(msg)
+                return message.Err(ex)
+            return message.Ok(None)
+        # Call the next handler in the chain.
+        if ex is not None:
+            self._next.error(msg, ex)
+        return self._next.handle(msg)
 
-    def handle(self, msg: T) -> K:
+    def handle(self, msg: MT) -> RT:
         """Handle the message. This method is called in the chain."""
+        # By default, the handler does nothing. The method is overridden
+        # by the derivative class. At this point, the handler can call
+        # the next handler in the chain.
         return self.next(msg)
 
-    def error(self, msg: T, ex: Exception) -> None:
+    def error(self, msg: MT, ex: Exception) -> None:
         """Handle an error. This method is called in the chain when
         an error occurs with a message."""
+        # By default, the handler does nothing. The method is overridden
+        # by the derivative class. At this point, the handler can call
+        # the next handler in the chain.
         self.next(msg, ex)
 
 
-class CommandHandler(Handler[message.Command, t.Any]):
+class CommandHandler(Handler[message.Command, RT]):
     """A command handler is a callable that takes a command and can optional
     returns a result."""
 
     @abc.abstractmethod
-    def handle(self, command: message.Command) -> t.Any:
+    def handle(self, cmd: message.Command) -> RT:
         """Call the command handler."""
         raise NotImplementedError
 
@@ -65,7 +82,7 @@ class EventHandler(Handler[message.Event, None]):
         raise NotImplementedError
 
 
-class LoggerHandler(Handler[message.Message, None]):
+class LoggerMiddleware(Handler[message.Message, None]):
     """A simple middleware that logs messages."""
 
     def __init__(self, logger: logging.Logger) -> None:

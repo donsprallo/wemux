@@ -2,6 +2,9 @@ import typing as t
 
 import pydantic
 
+T = t.TypeVar('T')
+E = t.TypeVar('E')
+
 
 class Event(pydantic.BaseModel):
     """Event is the base class for message bus events. The class inherits from
@@ -23,14 +26,32 @@ class Command(pydantic.BaseModel):
         return f"<{self.__class__.__name__}>"
 
 
-class Result(pydantic.BaseModel):
-    """Result is the base class for message bus command results. The
-    class inherits from pydantic BaseModel."""
-    model_config = pydantic.ConfigDict(arbitrary_types_allowed=True)
-
-    def __repr__(self) -> str:
-        return f"<{self.__class__.__name__}>"
-
-
 Message = t.Union['Event', 'Command']
 """A message is either an event or a command."""
+
+
+class Ok(t.Generic[T]):
+
+    def __init__(self, value: T):
+        self.value = value
+
+    def __repr__(self) -> str:
+        return f"<{self.__class__.__name__}({self.value})>"
+
+    def __eq__(self, other):
+        return self.value == other.value
+
+
+class Err(t.Generic[E]):
+
+    def __init__(self, error: E):
+        self.error = error
+
+    def __repr__(self) -> str:
+        return f"<{self.__class__.__name__}({self.error})>"
+
+    def __eq__(self, other):
+        return self.error == other.error
+
+
+Result = t.Union[Ok[T], Err[E]]

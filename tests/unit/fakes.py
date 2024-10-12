@@ -8,34 +8,44 @@ class FakeCommand(message.Command):
     data: str | None = None
 
 
-class FakeCommandHandler(handler.CommandHandler):
+class FakeEvent(message.Event):
+    """A simple mock event."""
+    counter: int = 0
+
+    @property
+    def is_handled(self) -> bool:
+        return self.counter > 0
+
+
+class FakeCommandHandler(handler.CommandHandler[str | None]):
     """A simple handler for the mock command. The handler returns the
     command data."""
 
-    def handle(
-        self,
-        command: FakeCommand
-    ) -> str:
-        command.is_handled = True
-        return command.data
+    def __init__(self, err: Exception | None = None) -> None:
+        super().__init__()
+        self.is_handled = False
+        self._err = err
 
-
-class FakeEvent(message.Event):
-    """A simple mock event."""
-    is_handled: bool = False
+    def handle(self, cmd: FakeCommand) -> str | None:
+        self.is_handled = True
+        cmd.is_handled = True
+        if self._err:
+            raise self._err
+        return cmd.data
 
 
 class FakeEventHandler(handler.EventHandler):
-    """A simple event listener for the mock event. The listener set the
-    is_called attribute of the event to True."""
+    """A simple event handler for the mock event. The handler set the
+    is_handled attribute of the event to True."""
 
-    def __init__(self) -> None:
+    def __init__(self, err: Exception | None = None) -> None:
         super().__init__()
         self.is_handled = False
+        self._err = err
 
-    def handle(
-        self,
-        event: FakeEvent
-    ) -> None:
+    def handle(self, event: FakeEvent) -> None:
         self.is_handled = True
-        event.is_handled = True
+        event.counter += 1
+        if self._err:
+            raise self._err
+        return self.next(event)
