@@ -3,6 +3,7 @@ import logging
 import typing as t
 
 from wemux import message
+from wemux import stream
 
 HT = t.TypeVar('HT', bound='Handler')
 ET = t.TypeVar('ET', bound=Exception)
@@ -66,6 +67,14 @@ class CommandHandler(Handler[message.Command, RT]):
     """A command handler is a callable that takes a command and can optional
     returns a result."""
 
+    def __init__(self, event_stream: stream.EventStream):
+        super().__init__()
+        self._event_stream = event_stream
+
+    @property
+    def event_stream(self) -> stream.EventStream:
+        return self._event_stream
+
     @abc.abstractmethod
     def handle(self, cmd: message.Command) -> RT:
         """Call the command handler."""
@@ -75,6 +84,14 @@ class CommandHandler(Handler[message.Command, RT]):
 class EventHandler(Handler[message.Event, None]):
     """An event listener is a callable that takes an event and returns
     nothing."""
+
+    def __init__(self, event_stream: stream.EventStream):
+        super().__init__()
+        self._event_stream = event_stream
+
+    @property
+    def event_stream(self) -> stream.EventStream:
+        return self._event_stream
 
     @abc.abstractmethod
     def handle(self, event: message.Event) -> None:

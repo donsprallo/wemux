@@ -39,7 +39,7 @@ class TestEventHandler:
 
     def test_must_handle_error(self):
         _handler1 = FakeEventHandler()
-        _handler2 = FakeEventHandler(Exception())
+        _handler2 = FakeEventHandler(err=Exception())
         _handler3 = FakeEventHandler()
         _event = FakeEvent()
 
@@ -79,7 +79,7 @@ class TestCommandHandler:
         assert _command.is_handled is True
 
     def test_must_handle_error(self):
-        _handler = FakeCommandHandler(Exception())
+        _handler = FakeCommandHandler(err=Exception())
         _command = FakeCommand()
 
         with pytest.raises(Exception):

@@ -35,6 +35,11 @@ class MessageBus:
         """The event handlers. Each event handler is called when an
         event is send to the bus."""
 
+    @property
+    def event_stream(self) -> stream.EventStream:
+        """Return the event stream."""
+        return self._event_stream
+
     def register_event_handler(
         self,
         key: t.Type[message.Event],
@@ -59,6 +64,7 @@ class MessageBus:
     ) -> t.Callable:
         """A decorator to register a command handler. The decorator takes the
         command as an argument to identify the command."""
+        kwargs.setdefault("event_stream", self.event_stream)
 
         def decorator(
             hdl: t.Type[handler.Handler]
