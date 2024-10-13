@@ -10,11 +10,8 @@ from .handler import EventHandler
 from .handler import Handler
 from .handler import LoggerMiddleware
 from .message import Command
-from .message import Err
 from .message import Event
 from .message import Message
-from .message import Ok
-from .message import Result
 from .messagebus import MessageBus
 from .stream import EventStream
 from .stream import InMemoryEventStream

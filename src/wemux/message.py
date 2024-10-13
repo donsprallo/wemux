@@ -28,30 +28,3 @@ class Command(pydantic.BaseModel):
 
 Message = t.Union['Event', 'Command']
 """A message is either an event or a command."""
-
-
-class Ok(t.Generic[T]):
-
-    def __init__(self, value: T):
-        self.value = value
-
-    def __repr__(self) -> str:
-        return f"<{self.__class__.__name__}({self.value})>"
-
-    def __eq__(self, other):
-        return self.value == other.value
-
-
-class Err(t.Generic[E]):
-
-    def __init__(self, error: E):
-        self.error = error
-
-    def __repr__(self) -> str:
-        return f"<{self.__class__.__name__}({self.error})>"
-
-    def __eq__(self, other):
-        return self.error == other.error
-
-
-Result = t.Union[Ok[T], Err[E]]

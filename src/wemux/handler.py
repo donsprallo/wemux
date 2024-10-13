@@ -39,9 +39,7 @@ class Handler(abc.ABC, t.Generic[MT, RT]):
         nothing."""
         # The chain ends here.
         if self._next is None:
-            if ex is not None:
-                return message.Err(ex)
-            return message.Ok(None)
+            return None
         # Call the next handler in the chain.
         if ex is not None:
             self._next.error(msg, ex)
