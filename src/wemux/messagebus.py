@@ -130,7 +130,7 @@ class MessageBus:
 def create_in_memory_message_bus() -> MessageBus:
     """Create an in memory message bus."""
     return MessageBus(
-        dispatcher.InMemoryCommandDispatcher(),
-        dispatcher.InMemoryEventDispatcher(),
+        dispatcher.CommandDispatcher(),
+        dispatcher.EventDispatcher(),
         iterator.InMemoryEventIterator()
     )
