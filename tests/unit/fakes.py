@@ -1,6 +1,8 @@
+import typing as t
+
 from wemux import handler
+from wemux import iterator
 from wemux import message
-from wemux import stream
 
 
 class FakeCommand(message.Command):
@@ -19,22 +21,24 @@ class FakeEvent(message.Event):
 
 
 class FakeCommandHandler(handler.CommandHandler[str | None]):
-    """A simple handler for the mock command. The handler returns the
-    command data."""
+    """A simple handler for the mock command. Normally the handler returns the
+    fake command data."""
 
     def __init__(
         self,
-        event_stream: stream.EventStream | None = None,
+        stream: handler.EventStream | None = None,
         events: list[message.Event] | None = None,
         err: Exception | None = None
     ) -> None:
-        if event_stream is None:
-            event_stream = stream.InMemoryEventStream()
-        super().__init__(event_stream)
+        if stream is None:
+            stream = iterator \
+                .InMemoryEventIterator()
+        super().__init__(stream)
         self.is_handled = False
         self._events = events or []
         self._err = err
 
+    @t.override
     def handle(self, cmd: FakeCommand) -> str | None:
         if self._err:
             # Simulate an error.
@@ -47,7 +51,7 @@ class FakeCommandHandler(handler.CommandHandler[str | None]):
             # Simulate that the command handler push
             # events to the event stream.
             for _event in self._events:
-                self.event_stream.push_event(_event)
+                self.push(_event)
         return cmd.data
 
 
@@ -57,17 +61,19 @@ class FakeEventHandler(handler.EventHandler):
 
     def __init__(
         self,
-        event_stream: stream.EventStream | None = None,
+        stream: handler.EventStream | None = None,
         events: list[message.Event] | None = None,
         err: Exception | None = None
     ) -> None:
-        if event_stream is None:
-            event_stream = stream.InMemoryEventStream()
-        super().__init__(event_stream)
+        if stream is None:
+            stream = iterator \
+                .InMemoryEventIterator()
+        super().__init__(stream)
         self.is_handled = False
         self._events = events or []
         self._err = err
 
+    @t.override
     def handle(self, event: FakeEvent) -> None:
         if self._err:
             # Simulate an error.
@@ -83,5 +89,5 @@ class FakeEventHandler(handler.EventHandler):
                 # Protect against infinite loops.
                 if _event.is_handled:
                     continue
-                self.event_stream.push_event(_event)
+                self.push(_event)
         return self.next(event)

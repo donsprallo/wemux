@@ -51,8 +51,8 @@ class TestMessageBusCommandHandler:
     def test_handler_must_be_registered_with_decorator_and_kwargs(self, mbus):
         @mbus.register_handler(FakeCommand, data="test")
         class Handler(FakeCommandHandler):
-            def __init__(self, event_stream, data):
-                super().__init__(event_stream)
+            def __init__(self, stream, data):
+                super().__init__(stream)
                 self.data = data
 
         assert len(mbus._command_handlers) == 1
@@ -86,10 +86,10 @@ class TestMessageBusCommandHandler:
         _event2 = FakeEvent()
         _event3 = FakeEvent()
         _handler1 = FakeCommandHandler(
-            event_stream=mbus.event_stream,
+            stream=mbus.events,
             events=[_event1, _event2])
         _handler2 = FakeEventHandler(
-            event_stream=mbus.event_stream,
+            stream=mbus.events,
             events=[_event3])
         mbus.register_command_handler(FakeCommand, _handler1)
         mbus.register_event_handler(FakeEvent, _handler2)
@@ -143,8 +143,8 @@ class TestMessageBusEventHandler:
     def test_handler_must_be_registered_with_decorator_and_kwargs(self, mbus):
         @mbus.register_handler(FakeEvent, data="test")
         class Handler(FakeEventHandler):
-            def __init__(self, event_stream, data):
-                super().__init__(event_stream)
+            def __init__(self, stream, data):
+                super().__init__(stream)
                 self.data = data
 
         assert len(mbus._event_handlers[FakeEvent]) == 1
@@ -171,10 +171,10 @@ class TestMessageBusEventHandler:
         _event2 = FakeEvent()
         _event3 = FakeEvent()
         _handler1 = FakeEventHandler(
-            event_stream=mbus.event_stream,
+            stream=mbus.events,
             events=[_event1, _event2])
         _handler2 = FakeEventHandler(
-            event_stream=mbus.event_stream,
+            stream=mbus.events,
             events=[_event3])
         mbus.register_event_handler(FakeEvent, _handler1)
         mbus.register_event_handler(FakeEvent, _handler2)

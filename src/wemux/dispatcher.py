@@ -20,13 +20,21 @@ class CommandDispatcher(abc.ABC):
         handlers: CommandHandlerMap,
         command: message.Command
     ) -> t.Any:
-        """Dispatch a command to a command handler."""
+        """Dispatch a command to a command handler.
+
+        Args:
+            handlers: The command handler map.
+            command: The command to dispatch.
+
+        Returns:
+            The result of the command handler.
+        """
         raise NotImplementedError
 
 
 class EventDispatcher(abc.ABC):
     """The EventDispatcher is an abstract class that dispatches events to event
-    listeners. A derivative class must implement the dispatch method."""
+    handler. A derivative class must implement the dispatch method."""
 
     @abc.abstractmethod
     def dispatch(
@@ -34,12 +42,18 @@ class EventDispatcher(abc.ABC):
         handlers: list[handler.EventHandler],
         event: message.Event
     ) -> None:
-        """Dispatch an event to a list of event listeners."""
+        """Dispatch an event to a list of event handlers.
+
+        Args:
+            handlers: The event handlers.
+            event: The event to dispatch.
+        """
         raise NotImplementedError
 
 
 class InMemoryCommandDispatcher(CommandDispatcher):
 
+    @t.override
     def dispatch(
         self,
         handlers: CommandHandlerMap,
@@ -58,6 +72,7 @@ class InMemoryCommandDispatcher(CommandDispatcher):
 
 class InMemoryEventDispatcher(EventDispatcher):
 
+    @t.override
     def dispatch(
         self,
         handlers: list[handler.EventHandler],

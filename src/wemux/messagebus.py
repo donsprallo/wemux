@@ -3,8 +3,8 @@ from collections import defaultdict
 
 from wemux import dispatcher
 from wemux import handler
+from wemux import iterator
 from wemux import message
-from wemux import stream
 
 
 class MessageBus:
@@ -17,11 +17,11 @@ class MessageBus:
         self,
         command_dispatcher: dispatcher.CommandDispatcher,
         event_dispatcher: dispatcher.EventDispatcher,
-        event_stream: stream.EventStream
+        event_iterator: iterator.EventIterator
     ) -> None:
         self._command_dispatcher = command_dispatcher
         self._event_dispatcher = event_dispatcher
-        self._event_stream = event_stream
+        self._event_iterator = event_iterator
         self._command_handlers: t.Dict[
             t.Type[message.Command],
             handler.CommandHandler
@@ -36,9 +36,9 @@ class MessageBus:
         event is send to the bus."""
 
     @property
-    def event_stream(self) -> stream.EventStream:
+    def events(self) -> iterator.EventIterator:
         """Return the event stream."""
-        return self._event_stream
+        return self._event_iterator
 
     def register_event_handler(
         self,
@@ -63,8 +63,18 @@ class MessageBus:
         **kwargs: t.Any
     ) -> t.Callable:
         """A decorator to register a command handler. The decorator takes the
-        command as an argument to identify the command."""
-        kwargs.setdefault("event_stream", self.event_stream)
+        command as an argument for identification. The decorator can take
+        additional arguments that are passed to the handler constructor.
+
+        Args:
+            command: The command type.
+            args: Additional arguments for the handler constructor.
+            kwargs: Additional keyword arguments for the handler constructor.
+
+        Returns:
+            A decorator that registers the handler to the bus.
+        """
+        kwargs.setdefault("stream", self.events)
 
         def decorator(
             hdl: t.Type[handler.Handler]
@@ -83,14 +93,20 @@ class MessageBus:
         return decorator
 
     def emit(self, event: message.Event) -> None:
-        """Handle an event. The event is sent to all event listeners. When an
-        event listener raises an exception, the exception is caught and logged.
-        The event is not send to the other listeners."""
-        self._event_stream.push_event(event)
+        """Handle an event. The event is sent to all event handlers. When an
+        event handler raises an exception, the exception is caught and the
+        execution goes to the next event handlers.
+
+        Args:
+            event: The event to handle.
+        """
+        self._event_iterator.push_event(event)
         self._emit_events()
 
     def handle(self, command: message.Command) -> t.Any:
-        """Handle a command. The command is sent to the command handler.
+        """Handle a command. The command is sent to the command handler. When
+        the command handler raises an exception, the handler error method is
+        called. After that, the exception is re-raised.
 
         Returns:
             The result of the command handler.
@@ -104,7 +120,8 @@ class MessageBus:
         return result
 
     def _emit_events(self) -> None:
-        for _event in self._event_stream:
+        """Emit events to the event handlers."""
+        for _event in self._event_iterator:
             _handlers = self._event_handlers[type(_event)]
             self._event_dispatcher.dispatch(
                 _handlers, _event)
@@ -115,5 +132,5 @@ def create_in_memory_message_bus() -> MessageBus:
     return MessageBus(
         dispatcher.InMemoryCommandDispatcher(),
         dispatcher.InMemoryEventDispatcher(),
-        stream.InMemoryEventStream()
+        iterator.InMemoryEventIterator()
     )

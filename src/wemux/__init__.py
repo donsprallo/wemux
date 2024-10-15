@@ -7,11 +7,13 @@ from .errors import HandlerNotFoundError
 from .errors import MessageBusError
 from .handler import CommandHandler
 from .handler import EventHandler
+from .handler import EventStream
 from .handler import Handler
+from .handler import Logger
 from .handler import LoggerMiddleware
+from .iterator import EventIterator
+from .iterator import InMemoryEventIterator
 from .message import Command
 from .message import Event
 from .message import Message
 from .messagebus import MessageBus
-from .stream import EventStream
-from .stream import InMemoryEventStream
