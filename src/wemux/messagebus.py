@@ -74,11 +74,13 @@ class MessageBus:
         Returns:
             A decorator that registers the handler to the bus.
         """
-        kwargs.setdefault("stream", self.events)
+        kwargs.setdefault('stream', self.events)
+        kwargs.setdefault('middleware', None)
 
         def decorator(
             hdl: t.Type[handler.Handler]
         ) -> t.Type[handler.Handler]:
+            # Register the handler to the bus.
             if issubclass(hdl, handler.CommandHandler):
                 self.register_command_handler(
                     command, hdl(*args, **kwargs))  # noqa
@@ -88,6 +90,9 @@ class MessageBus:
             else:
                 raise ValueError("handler must be a CommandHandler "
                                  "or EventHandler")
+            # Add middleware to the handler chain.
+            if kwargs['middleware']:
+                return hdl.chain(kwargs['middleware'])
             return hdl
 
         return decorator
