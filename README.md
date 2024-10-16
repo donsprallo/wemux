@@ -1,4 +1,4 @@
-from pyexpat.errors import messagesfrom PIL.PyAccess import logger<div align="center">
+<div align="center">
 
 # Wemux
 
