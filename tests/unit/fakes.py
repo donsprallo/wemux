@@ -30,10 +30,7 @@ class FakeCommandHandler(handler.CommandHandler[str | None]):
         events: list[message.Event] | None = None,
         err: Exception | None = None
     ) -> None:
-        if stream is None:
-            stream = iterator \
-                .InMemoryEventIterator()
-        super().__init__(stream)
+        super().__init__(stream or iterator.InMemoryEventIterator())
         self.is_handled = False
         self._events = events or []
         self._err = err

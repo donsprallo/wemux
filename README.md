@@ -25,29 +25,28 @@ python -m pip install wemux
 ```python
 import wemux
 
-# Create a message bus.
-message_bus = wemux.create_in_memory_message_bus()
+# Create the message bus instance.
+mbus = wemux.create_in_memory_message_bus()
 
 
 class ExampleEvent(wemux.Event):
-    """An example event."""
-    
+
     def __init__(self, message: str):
+        super().__init__()
         self.message = message
-        
-        
-@message_bus.register_handler(ExampleEvent)
-class ExampleEventHandler(wemux.EventHandler[ExampleEvent]):
-    """An event handler for ExampleEvent."""
+
+
+@mbus.subscribe(ExampleEvent)
+class ExampleEventHandler(wemux.EventHandler):
 
     def handle(self, event: ExampleEvent) -> None:
         # Access the event data.
         print(event.message)
 
-        
-# Emit an event.
+
+# Emit the example event.
 event = ExampleEvent("Hello, world!")
-message_bus.emit(event)
+mbus.emit(event)
 ```
 
 It is also possible to emit new events while handle event handlers.
@@ -55,16 +54,19 @@ It is also possible to emit new events while handle event handlers.
 ````python
 import wemux
 
+# Create the message bus instance.
+mbus = wemux.create_in_memory_message_bus()
+
+
 class AnotherEvent(wemux.Event):
-    """Another example event."""
-    
+
     def __init__(self, message: str):
+        super().__init__()
         self.message = message
 
-        
-@message_bus.register_handler(AnotherEvent)
-class AnotherEventHandler(wemux.EventHandler[AnotherEvent]):
-    """An event handler for AnotherEvent."""
+
+@mbus.subscribe(AnotherEvent)
+class AnotherEventHandler(wemux.EventHandler):
 
     def handle(self, event: AnotherEvent) -> None:
         # Access the event data.
@@ -79,18 +81,21 @@ to be used for actions that should return a result.
 ```python
 import wemux
 
+# Create the message bus instance.
+mbus = wemux.create_in_memory_message_bus()
+
 
 class ExampleCommand(wemux.Command):
-    """An example command."""
-    
+
     def __init__(self, message: str):
+        super().__init__()
         self.message = message
 
-        
-@message_bus.register_handler(ExampleCommand)
-class ExampleCommandHandler(wemux.CommandHandler[ExampleCommand, str]):
+
+@mbus.subscribe(ExampleCommand)
+class ExampleCommandHandler(wemux.CommandHandler[str]):
     """A command handler for ExampleCommand. The result type is str."""
-    
+
     def handle(self, command: ExampleCommand) -> str:
         # Push a new event.
         event = ExampleEvent("Another event.")
@@ -101,7 +106,7 @@ class ExampleCommandHandler(wemux.CommandHandler[ExampleCommand, str]):
 
 # Send a command.
 command = ExampleCommand("Hello, world!")
-message = message_bus.handle(command)
+message = mbus.handle(command)
 assert message == "Hello, world!"
 ```
 
@@ -113,14 +118,17 @@ specific order.
 import wemux
 import logging
 
+# Create the message bus instance.
+mbus = wemux.create_in_memory_message_bus()
+
 # Create a handler chain with a logger middleware.
 handler = ExampleCommandHandler()
 logger = logging.getLogger(__name__)
 handler.chain(wemux.LoggerMiddleware(logger))
 
 # Register the handler with the message bus.
-message_bus.register_command_handler(handler)
-message_bus.handle(ExampleCommand("Hello, world!"))
+mbus.subscribe_command(ExampleCommand, handler)
+mbus.handle(ExampleCommand("Hello, world!"))
 ```
 
 Or with a decorator.
@@ -129,28 +137,29 @@ Or with a decorator.
 import wemux
 import logging
 
+logger = logging.getLogger(__name__)
+mbus = wemux.create_in_memory_message_bus()
 
-class AnotherMiddleware(wemux.Middleware):
-    """Another middleware that override the handle and the error method."""
+
+class AnotherMiddleware(wemux.Handler):
 
     def handle(self, message: wemux.Message) -> wemux.Message:
         print("Another middleware.")
         return self.next(message)
-                
+
     def error(self, message: wemux.Message, error: Exception) -> None:
         print("Another middleware error.")
         print(error)
         self.next(message, error)
 
 
-# Create the middleware.
-logger = logging.getLogger(__name__)
-middleware = wemux.LoggerMiddleware(logger) \
+# Create the middleware by chaining multiple middlewares.
+middleware = wemux.LoggerMiddleware(logger)
     .chain(AnotherMiddleware())
 
 
-@message_bus.register_handler(ExampleCommand, middleware=middleware)
-class ExampleCommandHandler(wemux.CommandHandler[ExampleCommand, str]):
+@mbus.subscribe(ExampleCommand, middleware=middleware)
+class ExampleCommandHandler(wemux.CommandHandler[str]):
     ...
 ```
 

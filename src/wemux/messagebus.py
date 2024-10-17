@@ -40,7 +40,7 @@ class MessageBus:
         """Return the event stream."""
         return self._event_iterator
 
-    def register_event_handler(
+    def subscribe_event(
         self,
         key: t.Type[message.Event],
         hdl: handler.EventHandler
@@ -48,7 +48,7 @@ class MessageBus:
         """Add an event handler to the bus."""
         self._event_handlers[key].append(hdl)
 
-    def register_command_handler(
+    def subscribe_command(
         self,
         key: t.Type[message.Command],
         hdl: handler.CommandHandler
@@ -56,7 +56,7 @@ class MessageBus:
         """Add a command handler to the bus."""
         self._command_handlers[key] = hdl
 
-    def register_handler(
+    def subscribe(
         self,
         command: t.Type[message.Message],
         *args: t.Any,
@@ -67,7 +67,7 @@ class MessageBus:
         additional arguments that are passed to the handler constructor.
 
         Args:
-            command: The command type.
+            command: The command to handle.
             args: Additional arguments for the handler constructor.
             kwargs: Additional keyword arguments for the handler constructor.
 
@@ -82,10 +82,10 @@ class MessageBus:
         ) -> t.Type[handler.Handler]:
             # Register the handler to the bus.
             if issubclass(hdl, handler.CommandHandler):
-                self.register_command_handler(
+                self.subscribe_command(
                     command, hdl(*args, **kwargs))  # noqa
             elif issubclass(hdl, handler.EventHandler):
-                self.register_event_handler(
+                self.subscribe_event(
                     command, hdl(*args, **kwargs))  # noqa
             else:
                 raise ValueError("handler must be a CommandHandler "

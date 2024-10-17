@@ -14,4 +14,5 @@ from .iterator import InMemoryEventIterator
 from .message import Command
 from .message import Event
 from .message import Message
+from .messagebus import create_in_memory_message_bus
 from .messagebus import MessageBus
