@@ -167,12 +167,10 @@ class LoggerMiddleware(Handler[message.Message, None]):
         super().__init__()
         self._logger = logger
 
-    @t.override
     def handle(self, msg: message.Message) -> None:
         self._logger.info(f"handle {msg}")
         self.next(msg)
 
-    @t.override
     def error(self, msg: message.Message, ex: Exception) -> None:
         self._logger.error(ex)
         self.next(msg, ex)

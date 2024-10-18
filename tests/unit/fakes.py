@@ -1,5 +1,3 @@
-import typing as t
-
 from wemux import handler
 from wemux import iterator
 from wemux import message
@@ -35,7 +33,6 @@ class FakeCommandHandler(handler.CommandHandler[str | None]):
         self._events = events or []
         self._err = err
 
-    @t.override
     def handle(self, cmd: FakeCommand) -> str | None:
         if self._err:
             # Simulate an error.
@@ -70,7 +67,6 @@ class FakeEventHandler(handler.EventHandler):
         self._events = events or []
         self._err = err
 
-    @t.override
     def handle(self, event: FakeEvent) -> None:
         if self._err:
             # Simulate an error.

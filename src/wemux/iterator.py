@@ -55,13 +55,11 @@ class InMemoryEventIterator(EventIterator):
     internal communication is required. After restarting the application,
     the events are lost."""
 
-    @t.override
     def _read_events(self) -> t.Sequence[message.Event]:
         # Nothing to do here. The in-memory stream does not read events
         # from an external stream.
         return []
 
-    @t.override
     def _write_event(self, event: message.Event) -> None:
         # Nothing to do here. The in-memory stream does not write events
         # to an external stream.
