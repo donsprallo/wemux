@@ -18,10 +18,10 @@ class Handler(abc.ABC, t.Generic[MT, RT]):
     the next handler in the chain."""
 
     def __init__(self):
-        self._next: t.Optional[t.Self] = None
+        self._next: t.Optional['Handler'] = None
         """The next handler in the chain. When no handler is available,
         the attribute is None. In this case, the handler ends here."""
-        self._prev: t.Optional[t.Self] = None
+        self._prev: t.Optional['Handler'] = None
         """The previous handler in the chain. When no handler is available,
         the attribute is None. In this case, the handler is the first
         handler in the chain."""

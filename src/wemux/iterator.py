@@ -15,7 +15,7 @@ class EventIterator(abc.ABC, t.Iterable[message.Event]):
         """Create a new event iterator."""
         self._events: list[message.Event] = []
 
-    def __iter__(self) -> t.Self:
+    def __iter__(self) -> 'EventIterator':
         """Return the event iterator."""
         return self
 
