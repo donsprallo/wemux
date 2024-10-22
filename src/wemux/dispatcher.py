@@ -4,7 +4,7 @@ from wemux import errors
 from wemux import handler
 from wemux import message
 
-CommandHandlerMap: t.TypeAlias = t.Dict[t.Type[message.Command], handler.CommandHandler]
+CommandHandlerMap: t.TypeAlias = dict[type[message.Command], handler.CommandHandler]
 """A command handler map is a dictionary that maps a command type to a specific
 command handler."""
 

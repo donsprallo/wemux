@@ -23,14 +23,14 @@ class MessageBus:
         self._event_dispatcher = event_dispatcher
         self._event_iterator = event_iterator
         self._command_handlers: t.Dict[
-            t.Type[message.Command],
+            type[message.Command],
             handler.CommandHandler
         ] = {}
         """The command handlers. Each command handler is called when a
         command is send to the bus."""
         self._event_handlers: t.Dict[
-            t.Type[message.Event],
-            t.List[handler.EventHandler]
+            type[message.Event],
+            list[handler.EventHandler]
         ] = defaultdict(list)
         """The event handlers. Each event handler is called when an
         event is send to the bus."""
@@ -42,7 +42,7 @@ class MessageBus:
 
     def subscribe_event(
         self,
-        key: t.Type[message.Event],
+        key: type[message.Event],
         hdl: handler.EventHandler
     ) -> None:
         """Add an event handler to the bus."""
@@ -50,7 +50,7 @@ class MessageBus:
 
     def subscribe_command(
         self,
-        key: t.Type[message.Command],
+        key: type[message.Command],
         hdl: handler.CommandHandler
     ) -> None:
         """Add a command handler to the bus."""
@@ -58,7 +58,7 @@ class MessageBus:
 
     def subscribe(
         self,
-        command: t.Type[message.Message],
+        command: type[message.Message],
         *args: t.Any,
         **kwargs: t.Any
     ) -> t.Callable:
@@ -78,21 +78,20 @@ class MessageBus:
         middleware = kwargs.pop('middleware', None)
 
         def decorator(
-            hdl: t.Type[handler.Handler]
-        ) -> t.Type[handler.Handler]:
+            hdl: type[handler.Handler]
+        ) -> type[handler.Handler]:
+            _handler = hdl(*args, **kwargs) # noqa
             # Register the handler to the bus.
-            if issubclass(hdl, handler.CommandHandler):
-                self.subscribe_command(
-                    command, hdl(*args, **kwargs))  # noqa
-            elif issubclass(hdl, handler.EventHandler):
-                self.subscribe_event(
-                    command, hdl(*args, **kwargs))  # noqa
+            if isinstance(_handler, handler.CommandHandler):
+                self.subscribe_command(command, _handler)
+            elif isinstance(_handler, handler.EventHandler):
+                self.subscribe_event(command, _handler)
             else:
                 raise ValueError("handler must be a CommandHandler "
                                  "or EventHandler")
             # Add middleware to the handler chain.
-            if middleware:
-                return hdl.chain(middleware)
+            if isinstance(middleware, handler.Handler):
+                _handler.chain(middleware)
             return hdl
 
         return decorator

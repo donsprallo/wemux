@@ -26,7 +26,7 @@ class Handler(abc.ABC, t.Generic[MT, RT]):
         the attribute is None. In this case, the handler is the first
         handler in the chain."""
 
-    def chain(self, handler: HT) -> HT:
+    def chain(self, handler: 'Handler') -> 'Handler':
         """Chain the middleware. This method returns the middleware that was
         passed to the method. This allows to chain multiple middlewares in a
         single line.
