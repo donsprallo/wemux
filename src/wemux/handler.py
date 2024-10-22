@@ -3,8 +3,6 @@ import typing as t
 
 from wemux import message
 
-HT = t.TypeVar('HT', bound='Handler')
-ET = t.TypeVar('ET', bound=Exception)
 MT = t.TypeVar('MT', bound=message.Message)
 RT = t.TypeVar('RT')
 

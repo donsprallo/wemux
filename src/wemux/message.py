@@ -2,9 +2,6 @@ import typing as t
 
 import pydantic
 
-T = t.TypeVar('T')
-E = t.TypeVar('E')
-
 
 class Event(pydantic.BaseModel):
     """Event is the base class for message bus events. The class inherits from
